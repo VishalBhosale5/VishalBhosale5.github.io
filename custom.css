@@ -1,0 +1,11 @@
+body {
+  padding: 20px;
+}
+
+.centered {
+  text-align: center;
+}
+
+.table tbody>tr>td.vert-align {
+  vertical-align: middle;
+}
