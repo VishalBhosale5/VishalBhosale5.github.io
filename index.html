@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon">
+  <title>Weather</title>
+  <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+  
+  <script src="https://fb.me/react-0.14.7.js"></script>
+  <script src="https://fb.me/react-dom-0.14.7.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+  
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" rel="stylesheet" />
+
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>  
+
+  <link href="css/custom.css" rel="stylesheet" />
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="text/babel">
+
+    var getWeather = function() {
+      var url = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20%3D%20648934%20and%20u%3D'c'&format=json";
+      return $.get(url);
+    };
+
+
+    var Header = React.createClass({
+      render: function() {
+        return (
+          <div className="panel-heading centered">
+            <h3>Killari Weather</h3>
+          </div>
+        );
+      }
+    });
+
+
+    var WeatherTableTopRow = React.createClass({
+      render: function() {
+        return (
+          <tr>
+            <td></td>
+            <td className="centered">
+              <img src={this.props.img}/>
+              <p/>
+              <span>{this.props.text}</span>
+            </td>
+          </tr>
+        );
+      }
+    });    
+
+    var WeatherTableRow = React.createClass({
+      render: function() {
+        return (
+          <tr>
+            <td>{this.props.caption}</td>
+            <td className="centered">
+              {this.props.value}
+            </td>
+          </tr>
+        );
+      }
+    });     
+
+
+    var Body = React.createClass({
+      getInitialState: function() {
+        return {
+          temp: 'n/a',
+          text: 'n/a',          
+          icon: undefined,
+          windDirection: 'n/a',
+          windSpeed: 'n/a',
+          humidity: 'n/a',
+          pressure: 'n/a',
+          sunrise: 'n/a',
+          sunset: 'n/a',
+          forecast: []
+        };
+      },    
+      componentDidMount: function() {
+        getWeather().done(function(data) {
+          var temp = data.query.results.channel.item.condition.temp + "\u00B0C";
+          var text = data.query.results.channel.item.condition.text;
+          var icon = 'http://l.yimg.com/a/i/us/we/52/' + data.query.results.channel.item.condition.code + '.gif';
+          var windDirection = data.query.results.channel.wind.direction + "\u00B0";
+          var windSpeed = data.query.results.channel.wind.speed + "km/h";
+          var humidity = data.query.results.channel.atmosphere.humidity + "%";
+          var pressure = data.query.results.channel.atmosphere.pressure + "mb";
+          var sunrise = data.query.results.channel.astronomy.sunrise;
+          var sunset = data.query.results.channel.astronomy.sunset;
+          var forecast = [];
+          for (var i = 0; i < data.query.results.channel.item.forecast.length; i++) {
+            var f = data.query.results.channel.item.forecast[i];
+            var item = {};
+
+            item.text = f.text;
+            item.icon = 'http://l.yimg.com/a/i/us/we/52/' + f.code + '.gif';
+            item.low = f.low + "\u00B0C";
+            item.high = f.high + "\u00B0C";
+            item.date = f.date;
+            forecast.push(item);
+          }
+
+
+          this.setState({
+            temp: temp,
+            text: text,
+            icon: icon,
+            windDirection: windDirection,
+            windSpeed: windSpeed,
+            humidity: humidity,
+            pressure: pressure,
+            sunrise: sunrise,
+            sunset: sunset,
+            forecast: forecast
+          });
+        }.bind(this));
+      },    
+      render: function() {
+        return (
+          <div className="panel-body"> 
+            <div className="row">
+              <div className="col-md-6"> 
+                <h3>Current</h3>
+                <table className="table table-striped table-bordered table-hover">
+                  <tbody>
+                    <WeatherTableTopRow img={this.state.icon} text={this.state.text}/>
+                    <WeatherTableRow caption="Temperature" value={this.state.temp} />
+                    <WeatherTableRow caption="Wind direction" value={this.state.windDirection} />
+                    <WeatherTableRow caption="Wind speed" value={this.state.windSpeed} />
+                    <WeatherTableRow caption="Humidity" value={this.state.humidity} />
+                    <WeatherTableRow caption="Pressure" value={this.state.pressure} />
+                    <WeatherTableRow caption="Sunrise" value={this.state.sunrise} />
+                    <WeatherTableRow caption="Sunset" value={this.state.sunset} />
+                  </tbody>
+                </table>
+                <a href="https://www.yahoo.com/?ilc=401" target="_blank"> <img src="https://poweredby.yahoo.com/purple.png" width="134" height="29"/> </a>
+              </div>
+              <div className="col-md-6"> 
+                <h3>Forecast</h3>
+                <table className="table table-striped table-bordered table-hover">
+                  <thead>
+                    <tr>
+                      <th className="centered">Date</th>
+                      <th className="centered">Weather</th>
+                      <th className="centered">Temperature</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {this.state.forecast.map(function(item, key) {
+                      return (
+                        <tr key={key}>
+                          <td className="centered vert-align">{item.date}</td>
+                          <td className="centered vert-align"><img src={item.icon}/><p/>{item.text}</td>
+                          <td className="centered vert-align">{item.low} - {item.high}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>              
+            </div>
+          </div>
+        );
+      }
+    });
+
+
+    var MainContainer = React.createClass({
+      render: function() {
+        return (
+          <div className="container">
+            <div className="panel panel-primary"> 
+              <Header />
+              <Body />          
+            </div>
+          </div>
+        );
+      }
+    });
+
+    ReactDOM.render(
+      <MainContainer/>,
+      document.getElementById('app')
+    );
+
+  </script>
+</body>
+</html>
